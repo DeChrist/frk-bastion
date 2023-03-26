@@ -14,8 +14,8 @@ resource "azurerm_key_vault" "bastion" {
 
 resource "azurerm_key_vault_access_policy" "current" {
   key_vault_id = azurerm_key_vault.bastion.id
-  tenant_id    = data.azurerm_client_config.current.tenant_id
-  object_id    = data.azurerm_client_config.current.object_id
+  tenant_id    = data.azuread_client_config.current.tenant_id
+  object_id    = data.azuread_client_config.current.object_id
 
   certificate_permissions = [
     "Backup",

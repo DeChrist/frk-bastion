@@ -1,4 +1,5 @@
 data "azurerm_client_config" "current" {}
+data "azuread_client_config" "current" {}
 
 locals {
   vm_subnet_address_prefix      = cidrsubnet(var.address_space, 26 - split("/", var.address_space)[1], 0)
