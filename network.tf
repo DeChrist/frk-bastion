@@ -2,8 +2,8 @@
 
 resource "azurerm_virtual_network" "bastion" {
   name                = "bastion"
-  location            = azurerm_resource_group.bastion.location
-  resource_group_name = azurerm_resource_group.bastion.name
+  location            = data.azurerm_resource_group.bastion.location
+  resource_group_name = data.azurerm_resource_group.bastion.name
   address_space       = [var.address_space]
 }
 
@@ -11,20 +11,20 @@ resource "azurerm_subnet" "vms" {
   name                 = var.subnet_name
   address_prefixes     = [local.vm_subnet_address_prefix]
   virtual_network_name = azurerm_virtual_network.bastion.name
-  resource_group_name  = azurerm_resource_group.bastion.name
+  resource_group_name  = data.azurerm_resource_group.bastion.name
 }
 
 resource "azurerm_subnet" "bastion" {
   name                 = "AzureBastionSubnet"
   address_prefixes     = [local.bastion_subnet_address_prefix]
   virtual_network_name = azurerm_virtual_network.bastion.name
-  resource_group_name  = azurerm_resource_group.bastion.name
+  resource_group_name  = data.azurerm_resource_group.bastion.name
 }
 
 resource "azurerm_network_security_group" "bastion" {
   name                = "AzureBastionSubnet-nsg"
-  location            = azurerm_resource_group.bastion.location
-  resource_group_name = azurerm_resource_group.bastion.name
+  location            = data.azurerm_resource_group.bastion.location
+  resource_group_name = data.azurerm_resource_group.bastion.name
 
   security_rule {
     name                       = "AllowHttpsInbound"
@@ -125,8 +125,8 @@ resource "azurerm_network_security_group" "bastion" {
 
 resource "azurerm_network_security_group" "vms" {
   name                = "${var.subnet_name}-nsg"
-  location            = azurerm_resource_group.bastion.location
-  resource_group_name = azurerm_resource_group.bastion.name
+  location            = data.azurerm_resource_group.bastion.location
+  resource_group_name = data.azurerm_resource_group.bastion.name
 
   security_rule {
     name                       = "AllowSshRdpFromBastion"

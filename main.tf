@@ -6,34 +6,33 @@ locals {
   bastion_subnet_address_prefix = cidrsubnet(var.address_space, 26 - split("/", var.address_space)[1], 1)
   virtual_machine_admins        = distinct(concat([data.azurerm_client_config.current.object_id], var.virtual_machine_admins))
   windows_server_admin_password = coalesce(var.windows_server_admin_password, format("%s!", title(random_pet.vm.id)))
-  uniq                          = substr(md5(azurerm_resource_group.bastion.id), 0, 8)
+  uniq                          = substr(md5(data.azurerm_resource_group.bastion.id), 0, 8)
   admin_ssh_private_key_file    = trimsuffix(var.admin_ssh_public_key_file, ".pub")
 }
 
 resource "random_pet" "vm" {
   length = 2
   keepers = {
-    resource_group_id = azurerm_resource_group.bastion.id
+    resource_group_id = data.azurerm_resource_group.bastion.id
   }
 }
 
 // Resource group
 
-resource "azurerm_resource_group" "bastion" {
+data "azurerm_resource_group" "bastion" {
   name     = var.resource_group_name
-  location = var.location
 }
 
 resource "azurerm_role_assignment" "virtual_machine_admins" {
   for_each             = toset(local.virtual_machine_admins)
-  scope                = azurerm_resource_group.bastion.id
+  scope                = data.azurerm_resource_group.bastion.id
   role_definition_name = "Virtual Machine Administrator Login"
   principal_id         = data.azurerm_client_config.current.object_id
 }
 
 resource "azurerm_role_assignment" "virtual_machine_users" {
   for_each             = toset(var.virtual_machine_users)
-  scope                = azurerm_resource_group.bastion.id
+  scope                = data.azurerm_resource_group.bastion.id
   role_definition_name = "Virtual Machine User Login"
   principal_id         = data.azurerm_client_config.current.object_id
 }
@@ -42,8 +41,8 @@ resource "azurerm_role_assignment" "virtual_machine_users" {
 
 resource "azurerm_ssh_public_key" "linux" {
   name                = "${var.linux_server_name}-ssh-public-key"
-  resource_group_name = upper(azurerm_resource_group.bastion.name)
-  location            = azurerm_resource_group.bastion.location
+  resource_group_name = upper(data.azurerm_resource_group.bastion.name)
+  location            = data.azurerm_resource_group.bastion.location
   public_key          = file(var.admin_ssh_public_key_file)
 }
 
@@ -85,8 +84,8 @@ module "linux" {
   depends_on = [azurerm_subnet.vms]
 
   name                = var.linux_server_name
-  resource_group_name = azurerm_resource_group.bastion.name
-  location            = azurerm_resource_group.bastion.location
+  resource_group_name = data.azurerm_resource_group.bastion.name
+  location            = data.azurerm_resource_group.bastion.location
 
   subnet_id                 = azurerm_subnet.vms.id
   admin_username            = var.admin_username
@@ -98,8 +97,8 @@ module "windows" {
   depends_on = [azurerm_subnet.vms]
 
   name                = var.windows_server_name
-  resource_group_name = azurerm_resource_group.bastion.name
-  location            = azurerm_resource_group.bastion.location
+  resource_group_name = data.azurerm_resource_group.bastion.name
+  location            = data.azurerm_resource_group.bastion.location
 
   subnet_id      = azurerm_subnet.vms.id
   admin_username = var.admin_username

@@ -2,8 +2,8 @@
 
 resource "azurerm_key_vault" "bastion" {
   name                = "${var.bastion_name}-${local.uniq}-kv"
-  location            = azurerm_resource_group.bastion.location
-  resource_group_name = azurerm_resource_group.bastion.name
+  location            = data.azurerm_resource_group.bastion.location
+  resource_group_name = data.azurerm_resource_group.bastion.name
   tenant_id           = data.azurerm_client_config.current.tenant_id
 
   sku_name                   = "standard"
