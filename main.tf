@@ -4,7 +4,7 @@ data "azuread_client_config" "current" {}
 locals {
   vm_subnet_address_prefix      = cidrsubnet(var.address_space, 26 - split("/", var.address_space)[1], 0)
   bastion_subnet_address_prefix = cidrsubnet(var.address_space, 26 - split("/", var.address_space)[1], 1)
-  virtual_machine_admins        = distinct(concat([data.azurerm_client_config.current.object_id], var.virtual_machine_admins))
+  virtual_machine_admins        = distinct(var.virtual_machine_admins)
   windows_server_admin_password = coalesce(var.windows_server_admin_password, format("%s!", title(random_pet.vm.id)))
   uniq                          = substr(md5(data.azurerm_resource_group.bastion.id), 0, 8)
   admin_ssh_private_key_file    = trimsuffix(var.admin_ssh_public_key_file, ".pub")
@@ -27,14 +27,14 @@ resource "azurerm_role_assignment" "virtual_machine_admins" {
   for_each             = toset(local.virtual_machine_admins)
   scope                = data.azurerm_resource_group.bastion.id
   role_definition_name = "Virtual Machine Administrator Login"
-  principal_id         = data.azurerm_client_config.current.object_id
+  principal_id         = each.key
 }
 
 resource "azurerm_role_assignment" "virtual_machine_users" {
   for_each             = toset(var.virtual_machine_users)
   scope                = data.azurerm_resource_group.bastion.id
   role_definition_name = "Virtual Machine User Login"
-  principal_id         = data.azurerm_client_config.current.object_id
+  principal_id         = each.key
 }
 
 // Public SSH key
